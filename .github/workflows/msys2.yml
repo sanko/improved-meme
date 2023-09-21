@@ -1,0 +1,114 @@
+name: MSYS2 [disabled]
+
+#~ on:
+  #~ pull_request:
+  #~ push:
+    #~ paths-ignore:
+      #~ - '.github/workflows/coverage.yml'
+      #~ - '.github/workflows/linux.yml'
+      #~ - '.github/workflows/macos.yml'
+      #~ - '.github/workflows/wasm.yml'
+      #~ - '.github/workflows/windows.yml'
+      #~ - '.gitignore'
+      #~ - 'LICENSE'
+      #~ - 'CHANGELOG.md'
+      #~ - 'README.md'
+
+on:
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'warning'
+      tags:
+        description: 'Manual only until I sort out conan/xmake/msys2'
+
+jobs:
+  build:
+    name: "${{ matrix.os }}-${{ matrix.mode }}"
+    strategy:
+      matrix:
+        msystem: [mingw64]
+        os: [windows-latest]
+        arch: [x86_64]
+        mode: [release, debug, releasedbg, coverage]
+
+    runs-on: ${{ matrix.os }}
+    if: "!contains(github.event.head_commit.message, 'ci skip')"
+
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+    - name: Get current date as package key
+      id: cache_key
+      shell: bash
+      run: echo "key=$(date +'%W')" >> $GITHUB_OUTPUT
+
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install system dependencies
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: ${{ matrix.msystem }}
+        install: base-devel git unzip p7zip mingw-w64-${{ matrix.arch }}-toolchain mingw-w64-${{ matrix.arch }}-xmake mingw-w64-${{ matrix.arch }}-python-conan mingw-w64-${{ matrix.arch }}-cli11
+        update: true
+
+    - name: Set xmake env
+      shell: msys2 {0}
+      run: echo "XMAKE_GLOBALDIR=${{ runner.workspace }}/xmake-global" >> $GITHUB_ENV
+
+    - name: Update xmake repository
+      shell: msys2 {0}
+      run: xmake repo --update
+
+    - name: Retrieve dependencies hash
+      id: dep_hash
+      run: echo "::set-output name=hash::$(xmake l utils.ci.packageskey)"
+
+    - name: Retrieve cached xmake dependencies
+      uses: actions/cache@v3
+      with:
+        path: ${{ env.XMAKE_GLOBALDIR }}/.xmake/packages
+        key: MinGW-${{ matrix.arch }}-${{ matrix.mode }}-${{ steps.dep_hash.outputs.hash }}-W${{ steps.pkg_key.outputs.key }}
+
+    #~ - name: Retrieve dependencies hash
+      #~ shell: msys2 {0}
+      #~ id: dep_hash
+      #~ run: echo "hash=$(xmake l utils.ci.packageskey)" >> $GITHUB_OUTPUT
+
+    #~ - name: Retrieve cached xmake dependencies
+      #~ uses: actions/cache@v3
+      #~ with:
+        #~ path: ${{ env.XMAKE_GLOBALDIR }}/.xmake/packages
+        #~ key: MinGW-${{ matrix.arch }}-${{ matrix.mode }}-${{ steps.dep_hash.outputs.hash }}-W${{ steps.cache_key.outputs.key }}
+
+    - name: Configure xmake and install dependencies
+      shell: msys2 {0}
+      run: xmake config -v --arch=${{ matrix.arch }} --mode=${{ matrix.mode }} --ccache=n --tests=y --yes
+
+    - name: Build
+      shell: msys2 {0}
+      run: xmake --yes
+
+    - name: Run unit tests
+      if: matrix.mode != 'releasedbg'
+      shell: msys2 {0}
+      run: xmake run -g tests - -r tap
+
+    #~ - name: Configure xmake for installation
+      #~ shell: msys2 {0}
+      #~ run: xmake config -v --arch=${{ matrix.arch }} --mode=${{ matrix.mode }} --ccache=n --tests=y --yes
+
+    #~ # Install the result files
+    #~ - name: Install Nazara
+      #~ run: xmake install -vo package
+
+    #~ # Upload artifacts
+    #~ - uses: actions/upload-artifact@v3
+      #~ with:
+        #~ name: nazaraengine-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.mode }}
+        #~ path: package

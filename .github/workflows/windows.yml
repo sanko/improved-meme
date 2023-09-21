@@ -1,0 +1,84 @@
+name: Windows
+
+on:
+  pull_request:
+  push:
+    paths-ignore:
+      - '.github/workflows/coverage.yml'
+      - '.github/workflows/linux.yml'
+      - '.github/workflows/macos.yml'
+      - '.github/workflows/msys2.yml'
+      - '.github/workflows/wasm.yml'
+      - '.gitignore'
+      - 'LICENSE'
+      - 'CHANGELOG.md'
+      - 'README.md'
+
+jobs:
+  build:
+    name: "${{ matrix.os }}-${{ matrix.mode }}"
+    strategy:
+      matrix:
+        os: [windows-latest]
+        arch: [x64]
+        mode: [release, debug, releasedbg, coverage]
+
+    runs-on: ${{ matrix.os }}
+    if: "!contains(github.event.head_commit.message, 'ci skip')"
+
+    steps:
+    - name: Get current date as package key
+      id: cache_key
+      run: echo "key=$(date +'%W')" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install system dependencies
+      run: |
+        choco install -y OpenCppCoverage
+        choco install -y conan
+
+    - name: Set xmake env
+      run: echo "XMAKE_GLOBALDIR=${{ runner.workspace }}/xmake-global" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+    - name: Setup xmake
+      uses: xmake-io/github-action-setup-xmake@v1
+      with:
+        xmake-version: branch@dev
+        actions-cache-folder: .xmake-cache-W${{ steps.cache_key.outputs.key }}
+
+    - name: Update xmake repository
+      run: xmake repo --update
+
+    - name: Retrieve dependencies hash
+      id: dep_hash
+      run: echo "hash=$(xmake l utils.ci.packageskey)" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+    - name: Retrieve cached xmake dependencies
+      uses: actions/cache@v3
+      with:
+        path: ${{ env.XMAKE_GLOBALDIR }}\.xmake\packages
+        key: MSVC-${{ matrix.arch }}-${{ matrix.mode }}-${{ steps.dep_hash.outputs.hash }}-W${{ steps.cache_key.outputs.key }}
+
+    - name: Configure xmake and install dependencies
+      run: xmake config -v --arch=${{ matrix.arch }} --mode=${{ matrix.mode }} --ccache=n --tests=y --yes
+
+    - name: Build
+      run: xmake -v --yes
+
+    - name: Run unit tests
+      if: matrix.mode != 'releasedbg'
+      run: xmake run -g tests -v  - -r tap
+
+    #~ - name: Configure xmake for installation
+      #~ run: xmake config -v --arch=${{ matrix.arch }} --mode=${{ matrix.mode }} --ccache=n --tests=y --yes
+
+    #~ - name: Install Nazara
+      #~ run: xmake install -vo package
+
+    #~ - uses: actions/upload-artifact@v3
+      #~ with:
+        #~ name: nazaraengine-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.mode }}
+        #~ path: package

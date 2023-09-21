@@ -1,0 +1,31 @@
+#ifndef ROCKEN_CONFIG__H_
+#define ROCKEN_CONFIG__H_
+// All fields are replaced by xmake
+
+#define BROCKEN_VERSION "${VERSION}"
+#define BROCKEN_VERSION_MAJOR ${VERSION_MAJOR}
+#define BROCKEN_VERSION_MINOR ${VERSION_MINOR}
+#define BROCKEN_VERSION_ALTER ${VERSION_ALTER}
+#define BROCKEN_VERSION_BUILD "${VERSION_BUILD}" // Change the format of this in xmake.lua:set_version(...)
+
+// Repo info
+#define GIT_COMMIT "${GIT_COMMIT}"
+#define GIT_COMMIT_LONG "${GIT_COMMIT_LONG}"
+#define GIT_COMMIT_DATE "${GIT_COMMIT_DATE}"
+#define GIT_BRANCH "${GIT_BRANCH}"
+#define GIT_TAG "${GIT_TAG}"
+#define GIT_TAG_LONG "${GIT_TAG_LONG}"
+#define GIT_CUSTOM "${GIT_TAG}-${GIT_COMMIT}"
+
+// Platform info
+#define BROCKEN_PLAT "${PLAT}" /* ${plat} */
+#define _BROCKEN_PLAT "${plat}"
+#define BROCKEN_ARCH "${ARCH}" /* ${arch} */
+#define BROCKEN_MODE "${MODE}" /* ${mode} */
+#define BROCKEN_OS "${OS}" /* ${os} */
+
+// Build info
+${define BROCKEN_DEBUG}
+${define BROCKEN_TESTS}
+${define BROCKEN_BENCHMARKS}
+#endif // ROCKEN_CONFIG__H_
