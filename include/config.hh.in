@@ -1,0 +1,49 @@
+#ifndef ROCKEN_CONFIG__H_
+#define ROCKEN_CONFIG__H_
+
+// All fields are replaced by xmake
+inline constexpr auto BROCKEN_VERSION = "${VERSION}";
+inline constexpr auto BROCKEN_VERSION_MAJOR = ${VERSION_MAJOR};
+inline constexpr auto BROCKEN_VERSION_MINOR = ${VERSION_MINOR};
+inline constexpr auto BROCKEN_VERSION_PATCH = ${VERSION_MAJOR};
+inline constexpr auto BROCKEN_VERSION_BUILD = // Format defined in xmake.lua:set_version(...)
+    "${VERSION_BUILD}";
+inline constexpr auto BROCKEN_VERSION_MASCOT = "";
+
+// Repo info
+inline constexpr auto BROCKEN_GIT_URL = "https://github.com/sanko/improved-meme";
+inline constexpr auto BROCKEN_GIT_COMMIT = "${GIT_COMMIT}";
+inline constexpr auto BROCKEN_GIT_COMMIT_LONG = "${GIT_COMMIT_LONG}";
+inline constexpr auto BROCKEN_GIT_COMMIT_DATE = "${GIT_COMMIT_DATE}";
+inline constexpr auto BROCKEN_GIT_BRANCH = "${GIT_BRANCH}";
+inline constexpr auto BROCKEN_GIT_TAG = "${GIT_TAG}";
+inline constexpr auto BROCKEN_GIT_TAG_LONG = "${GIT_TAG_LONG}";
+inline constexpr auto BROCKEN_GIT = "${GIT_TAG}-${GIT_COMMIT}";
+
+// Platform info
+inline constexpr auto BROCKEN_PLAT = "${PLAT}"; // uppercase
+inline constexpr auto BROCKEN_plat = "${plat}"; // lowercase
+inline constexpr auto BROCKEN_ARCH = "${ARCH}";
+inline constexpr auto BROCKEN_arch = "${arch}";
+inline constexpr auto BROCKEN_MODE = "${MODE}";
+inline constexpr auto BROCKEN_mode = "${mode}";
+inline constexpr auto BROCKEN_OS = "${OS}";
+inline constexpr auto BROCKEN_os = "${os}";
+
+// Build info. xmake comments out undefined values
+${define BROCKEN_DEBUG}
+${define BROCKEN_TESTS}
+${define BROCKEN_BENCHMARKS}
+
+// C++20 features as defined in /xmake.lua
+${define HAS_CONSTEXPR}
+${define HAS_COROUTINE}
+${define HAS_CONSEXPR_AND_STATIC_ASSERT}
+
+#if _MSC_VER && !__INTEL_COMPILER
+#define _API __declspec(dllexport)
+#else
+#define _API
+#endif
+
+#endif // ROCKEN_CONFIG__H_

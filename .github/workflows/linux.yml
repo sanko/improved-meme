@@ -1,0 +1,105 @@
+name: Linux
+
+on:
+  pull_request:
+  push:
+    paths-ignore:
+      - '.github/workflows/coverage.yml'
+      - '.github/workflows/macos.yml'
+      - '.github/workflows/msys2.yml'
+      - '.github/workflows/wasm.yml'
+      - '.github/workflows/windows.yml'
+      - '.gitignore'
+      - 'LICENSE'
+      - 'CHANGELOG.md'
+      - 'README.md'
+
+jobs:
+  build:
+    name: "${{ matrix.os }}-${{ matrix.toolchain }}-${{ matrix.mode }}"
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        arch: [x86_64]
+        mode: [release, debug, releasedbg, coverage]
+        toolchain: [gcc, clang]
+        include:
+          # Add appropriate variables for gcov version required. This will intentionally break
+          # if you try to use a compiler that does not have gcov set
+          - compiler: g++-12
+            gcov_executable: gcov-12
+            ccompiler: gcc-12
+            cmake_ar: ar-12
+            cmake_ranlib: ranlib-12
+
+          # Source based code coverage
+          - compiler: clang++-16
+            gcov_executable: "llvm-cov-16 gcov"
+            ccompiler: clang-16
+            cmake_ar: llvm-ar-16
+            cmake_ranlib: llvm-ranlib-16
+    runs-on: ${{ matrix.os }}
+    if: "!contains(github.event.head_commit.message, 'ci skip')"
+    #~ concurrency:
+        #~ group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.os }}
+        #~ cancel-in-progress: true
+
+    steps:
+    - name: Clone repo
+      uses: actions/checkout@v4
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        pip3 install conan
+
+    - name: Install LLVM/clang 16
+      if: ${{ matrix.toolchain == 'clang' }}
+      run: |
+        wget https://apt.llvm.org/llvm.sh
+        chmod +x llvm.sh
+        sudo ./llvm.sh 16 all
+
+    - name: Set xmake env
+      run: |
+        echo "XMAKE_GLOBALDIR=${{ runner.workspace }}/xmake-global" >> $GITHUB_ENV
+
+    - name: Setup xmake
+      uses: xmake-io/github-action-setup-xmake@v1
+      with:
+        xmake-version: latest
+        actions-cache-folder: .xmake-cache-${{ matrix.os }}
+
+    #~ - name: Update xmake repository
+      #~ run: xmake repo -v --update
+
+    #~ - name: Retrieve dependencies hash
+      #~ id: dep_hash
+      #~ run: echo "hash=$(xmake l utils.ci.packageskey)" >> $GITHUB_OUTPUT
+
+    #~ - name: Retrieve cached xmake dependencies
+      #~ uses: actions/cache@v3
+      #~ with:
+        #~ path: ${{ env.XMAKE_GLOBALDIR }}/.xmake/packages
+        #~ key: Linux-${{ matrix.arch }}-${{ matrix.mode }}-${{ steps.dep_hash.outputs.hash }}-W${{ steps.cache_key.outputs.key }}
+
+    - name: Configure xmake and install dependencies
+      run: CXX=/usr/bin/${{matrix.compiler}} CC=/usr/bin/${{matrix.ccompiler}} xmake config -v --arch=${{ matrix.arch }} --mode=${{ matrix.mode }} --ccache=n --tests=y --toolchain=${{ matrix.toolchain }} --yes
+
+    - name: Build Brocken
+      run: xmake --yes
+
+    - name: Run unit tests
+      if: matrix.mode != 'releasedbg'
+      run: xmake test
+
+    #~ # Setup installation configuration
+    #~ - name: Configure xmake for installation
+      #~ run: xmake config --arch=${{ matrix.arch }} --mode=${{ matrix.mode }} --ccache=n --tests=y --yes
+
+    #~ # Upload artifacts
+    #~ - uses: actions/upload-artifact@v3
+      #~ with:
+        #~ name: brocken-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.mode }}
+        #~ path: package
