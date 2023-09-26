@@ -1,33 +1,47 @@
 #ifndef ROCKEN_INCLUDE_LEXER__H_
 #define ROCKEN_INCLUDE_LEXER__H_
-
-#include "rocken.hh"
 #include "token.hh"
-
-#include <string_view>
-
+#include <string>
 namespace Rocken
 {
 class Lexer
 {
-  private:
-    std::u32string input_; // TODO: make this unicode aware
-    size_t pos_ = 0;
-    size_t pos_line_ = 0;
-    char32_t ch_ = 0;
+public:
+  Lexer(const std::string &input) : input_(input), pos_(0) {}
 
-  public:
-    Lexer(std::u32string_view &input) : input_(input) {}
-    Lexer(std::string_view &input) : input_(to_utf32(input)) {}
-    ~Lexer() {}
-    Rocken::Token NextToken();
+  Rocken::Token NextToken() {
+    if (pos_ >= input_.length()) { return Rocken::Token{Rocken::TokenType::_EOF, ""}; }
+    char c = input_[pos_];
+    ++pos_;
 
-  private:
-    std::u32string readIdentifier();
-    char32_t peekChar(){
-      if(pos_+1 >= input_.size()) return 0;
-      input_.at(pos_+1) ;}
-    // Store line, file, etc.
+    switch (c) {
+    case '=':
+      return Rocken::Token{Rocken::TokenType::ASSIGN, "="};
+    case '+':
+      return Rocken::Token{Rocken::TokenType::PLUS, "+"};
+    case '(':
+      return Rocken::Token{Rocken::TokenType::LPAREN, "("};
+    case ')':
+      return Rocken::Token{Rocken::TokenType::RPAREN, ")"};
+    case '{':
+      return Rocken::Token{Rocken::TokenType::LBRACE, "{"};
+    case '}':
+      return Rocken::Token{Rocken::TokenType::RBRACE, "}"};
+    case ',':
+      return Rocken::Token{Rocken::TokenType::COMMA, ","};
+    case ';':
+      return Rocken::Token{Rocken::TokenType::SEMICOLON, ";"};
+    default:
+      // TODO: Handle other characters
+      return Rocken::Token{TokenType::_ILLEGAL, ""};
+    }
+  }
+
+private:
+  const std::string &input_;
+  size_t pos_;
+  size_t pos_line_;
+  // Store line, file, etc.
 };
 };     // namespace Rocken
 #endif // ROCKEN_INCLUDE_LEXER__H_

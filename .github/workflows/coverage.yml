@@ -90,10 +90,10 @@ jobs:
         key: MSVC-${{ matrix.config.arch }}-coverage-${{ steps.dep_hash_windows.outputs.hash }}-W${{ steps.cache_key.outputs.key }}
 
     - name: Configure xmake and install dependencies
-      run: xmake config --arch=${{ matrix.config.arch }} --mode=coverage --ccache=n --tests=y --yes -v
+      run: xmake config --arch=${{ matrix.config.arch }} --mode=coverage --ccache=n --tests=y --yes
 
     - name: Build
-      run: xmake --yes -v
+      run: xmake --yes
 
     - name: Run unit tests and generate coverage output (Linux)
       if: runner.os == 'Linux'

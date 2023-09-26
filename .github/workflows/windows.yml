@@ -66,11 +66,11 @@ jobs:
       run: xmake config -v --arch=${{ matrix.arch }} --mode=${{ matrix.mode }} --ccache=n --tests=y --yes
 
     - name: Build
-      run: xmake -v --yes
+      run: xmake --yes
 
     - name: Run unit tests
       if: matrix.mode != 'releasedbg'
-      run: xmake run -g tests -v  - -r tap
+      run: xmake run -g tests - -r tap
 
     #~ - name: Configure xmake for installation
       #~ run: xmake config -v --arch=${{ matrix.arch }} --mode=${{ matrix.mode }} --ccache=n --tests=y --yes

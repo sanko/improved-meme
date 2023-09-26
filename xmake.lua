@@ -74,7 +74,7 @@ target("rocken")
     set_kind("shared")
     set_group("core")
     add_files(
-    "src/rocken.cc","src/token.cc", "src/lexer.cc")
+    "src/rocken.cc","src/token.cc")
     add_includedirs("include")
     add_configfiles("include/config.hh.in", {variables = {brocken_mode = "xmake"}, prefixdir = "include"})
 --~     set_basename("rocken_$(mode)_$(arch)")
@@ -190,3 +190,4 @@ option("benchmarks")
 --
 -- @endcode
 --
+
