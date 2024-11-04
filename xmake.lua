@@ -3,7 +3,8 @@ set_version("0.0.1", {build = "%c" -- Sets format of VERSION_BUILD in config.hh.
 --~ ", soname = true
 })
 
-set_xmakever("2.5.3") -- Required to stuff GIT_* into config.h
+-- set_xmakever("2.5.3") -- Required to stuff GIT_* into config.h
+set_xmakever("2.9.6") -- Required to stuff GIT_* into config.h
 
 set_languages("c17", "c++20")
 
@@ -20,10 +21,12 @@ end
 --~ includes("src", "include")
 
 --~ set_config("buildir", "build.xmake")
-includes("check_features.lua") -- detect C++20 features: cxx_constexpr, cxx_impl_coroutine
+includes("@builtin/check") -- detect C++20 features: cxx_constexpr, cxx_impl_coroutine
 
 add_cflags("-fPIC", "-pipe")
-add_cxxflags("-fPIC", "-pipe", "-Wno-invalid-offsetof")
+add_cxxflags("-fPIC", "-pipe")
+
+-- add_cxxflags("-Wno-invalid-offsetof")
 
 set_encodings("utf-8") --~ http://utf8everywhere.org/
 
