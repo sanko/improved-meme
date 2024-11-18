@@ -110,7 +110,7 @@ jobs:
         "C:\Program Files\OpenCppCoverage\OpenCppCoverage.exe" --export_type cobertura:coverage.out --sources "include" --sources "t" --sources "src" --cover_children -- xmake run --group=tests
 
     - name: Upload Coverage Report to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       with:
